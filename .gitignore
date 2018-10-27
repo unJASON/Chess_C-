@@ -39,3 +39,6 @@ Debug/*
 Debug/
 *.log
 *.lastbuildstate
+*.vcxproj
+*.filters
+*.user
