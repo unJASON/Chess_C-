@@ -38,3 +38,4 @@ Debug/*
 /Debug/*
 Debug/
 *.log
+*.lastbuildstate
