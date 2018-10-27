@@ -54,12 +54,15 @@ void initBoard(int (*board)[15]){
 Node * select(Node* n) {
 	//
 }
+//扩展
 Node * expand(Node n) {
 
 }
+//模拟
 Node * simulate(Node n) {
 
 }
+//反向传播
 void packPropagation(Node n) {
 
 }
