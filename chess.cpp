@@ -4,7 +4,7 @@
 #include<random>
 #include<algorithm>
 #include "jsoncpp/json.h"
-
+#include <cstring>
 //#define DEBUG
 
 using namespace std;
@@ -17,12 +17,27 @@ int x = -1;//最后一步下的地方
 int y = -1;//最后一步下的地方
 
 //const double C = 1.0f;
-const double C = 1.96f;
+const double C = 1.0f;
 
 //产生随机数
 default_random_engine engine(time(nullptr));
 uniform_int_distribution<int> uidis(0, 224);
 
+
+static unsigned long x_random = 123456789, y_random = 362436069, z_random = 521288629;
+inline unsigned long xorshf96(void) {          //period 2^96-1
+	unsigned long t;
+	x_random ^= x_random << 16;
+	x_random ^= x_random >> 5;
+	x_random ^= x_random << 1;
+
+	t = x_random;
+	x_random = y_random;
+	y_random = z_random;
+	z_random = t ^ x_random ^ y_random;
+
+	return z_random;
+}
 
 //判断输赢需要用到的数组
 int fx[4] = { 0,-1,-1,-1 };
@@ -269,18 +284,120 @@ void RecoverBoard(string str) {
 	Json::Value input;
 	reader.parse(str, input);
 	//分析input输入和之前的输出，Recover棋盘
-	int turnNum = input["responses"].size();
-	for (int i = 0; i < turnNum; i++)
+	int turnNum_rsp = input["responses"].size();
+	int turnNum_req = input["requests"].size();
+	//对方先手
+	int zero = 0;
+	if (input["requests"][zero]["x"] == -1)
 	{
-		//对方落子2
-		if (input["requests"][i]["y"].asInt() >= 0 && input["requests"][i]["x"].asInt() >= 0)
-			board[input["requests"][i]["y"].asInt()][input["requests"][i]["x"].asInt()] = 2;
-		//己方落子1
-		if (input["responses"][i]["y"].asInt() >= 0 && input["responses"][i]["x"].asInt() >= 0)
-			board[input["responses"][i]["y"].asInt()][input["responses"][i]["x"].asInt()] = 1;
+		//己方第四回合是否选择了换手,第六回合才能从resopnses判别
+		if (turnNum_rsp >= 2 && input["responses"][1]["x"] == -1)
+		{
+			//换手前下的子
+			for (int i = 0; i < 2; i++)
+			{
+				//己方落子1
+				if (input["requests"][i]["x"].asInt() >= 0 && input["requests"][i]["y"].asInt() >= 0)
+					board[input["requests"][i]["x"].asInt()][input["requests"][i]["y"].asInt()] = 1;
+				//对方落子2
+				if (input["responses"][i]["x"].asInt() >= 0 && input["responses"][i]["y"].asInt() >= 0)
+					board[input["responses"][i]["x"].asInt()][input["responses"][i]["y"].asInt()] = 2;
+			}
+			//换手后下的子
+			for (int i = 2; i < turnNum_rsp; i++)
+			{
+				//对方落子2
+				if (input["requests"][i]["x"].asInt() >= 0 && input["requests"][i]["y"].asInt() >= 0)
+					board[input["requests"][i]["x"].asInt()][input["requests"][i]["y"].asInt()] = 2;
+				//己方落子1
+				if (input["responses"][i]["x"].asInt() >= 0 && input["responses"][i]["y"].asInt() >= 0)
+					board[input["responses"][i]["x"].asInt()][input["responses"][i]["y"].asInt()] = 1;
+			}
+			if (input["requests"][turnNum_rsp]["x"].asInt() >= 0 && input["requests"][turnNum_rsp]["y"].asInt() >= 0)
+				board[input["requests"][turnNum_rsp]["x"].asInt()][input["requests"][turnNum_rsp]["y"].asInt()] = 2;
+			//保存对手走的最后一步棋到全局变量x,y
+			x = input["requests"][turnNum_rsp]["x"].asInt();
+			y = input["requests"][turnNum_rsp]["y"].asInt();
+		}
+		//未达第六回合或未换手
+		else
+		{
+			for (int i = 0; i < turnNum_rsp; i++)
+			{
+				//对方落子2
+				if (input["requests"][i]["x"].asInt() >= 0 && input["requests"][i]["y"].asInt() >= 0)
+					board[input["requests"][i]["x"].asInt()][input["requests"][i]["y"].asInt()] = 2;
+				//己方落子1
+				if (input["responses"][i]["x"].asInt() >= 0 && input["responses"][i]["y"].asInt() >= 0)
+					board[input["responses"][i]["x"].asInt()][input["responses"][i]["y"].asInt()] = 1;
+			}
+			if (input["requests"][turnNum_rsp]["x"].asInt() >= 0 && input["requests"][turnNum_rsp]["y"].asInt() >= 0)
+				board[input["requests"][turnNum_rsp]["x"].asInt()][input["requests"][turnNum_rsp]["y"].asInt()] = 2;
+			//保存对手走的最后一步棋到全局变量x,y
+			x = input["requests"][turnNum_rsp]["x"].asInt();
+			y = input["requests"][turnNum_rsp]["y"].asInt();
+		}
 	}
-	if (input["requests"][turnNum]["y"].asInt() >= 0 && input["requests"][turnNum]["x"].asInt() >= 0)
-		board[input["requests"][turnNum]["y"].asInt()][input["requests"][turnNum]["x"].asInt()] = 2;
+	//己方先手
+	else
+	{
+		//对方选择了换手
+		if (turnNum_req >= 3 && input["requests"][2]["x"] == -1)
+		{
+			//换手前下的子
+			for (int i = 0; i < 2; i++)
+			{
+				//己方落子1
+				if (input["requests"][i]["x"].asInt() >= 0 && input["requests"][i]["y"].asInt() >= 0)
+					board[input["requests"][i]["x"].asInt()][input["requests"][i]["y"].asInt()] = 1;
+				//对方落子2
+				if (input["responses"][i]["x"].asInt() >= 0 && input["responses"][i]["y"].asInt() >= 0)
+					board[input["responses"][i]["x"].asInt()][input["responses"][i]["y"].asInt()] = 2;
+			}
+			//换手后下的子
+			for (int i = 2; i < turnNum_rsp; i++)
+			{
+				//对方落子2
+				if (input["requests"][i]["x"].asInt() >= 0 && input["requests"][i]["y"].asInt() >= 0)
+					board[input["requests"][i]["x"].asInt()][input["requests"][i]["y"].asInt()] = 2;
+				//己方落子1
+				if (input["responses"][i]["x"].asInt() >= 0 && input["responses"][i]["y"].asInt() >= 0)
+					board[input["responses"][i]["x"].asInt()][input["responses"][i]["y"].asInt()] = 1;
+			}
+			if (input["requests"][turnNum_rsp]["x"].asInt() >= 0 && input["requests"][turnNum_rsp]["y"].asInt() >= 0)
+				board[input["requests"][turnNum_rsp]["x"].asInt()][input["requests"][turnNum_rsp]["y"].asInt()] = 2;
+			//保存对手走的最后一步棋到全局变量x,y
+			//第五回合接收到的对方最后一手是-1,-1，需变换
+			if (turnNum_req == 3)
+			{
+				x = input["responses"][1]["x"].asInt();
+				y = input["responses"][1]["y"].asInt();
+			}
+			else
+			{
+				x = input["requests"][turnNum_rsp]["x"].asInt();
+				y = input["requests"][turnNum_rsp]["y"].asInt();
+			}
+		}
+		//未达到第五回合或未换手
+		else
+		{
+			for (int i = 0; i < turnNum_rsp; i++)
+			{
+				//对方落子2
+				if (input["requests"][i]["x"].asInt() >= 0 && input["requests"][i]["y"].asInt() >= 0)
+					board[input["requests"][i]["x"].asInt()][input["requests"][i]["y"].asInt()] = 2;
+				//己方落子1
+				if (input["responses"][i]["x"].asInt() >= 0 && input["responses"][i]["y"].asInt() >= 0)
+					board[input["responses"][i]["x"].asInt()][input["responses"][i]["y"].asInt()] = 1;
+			}
+			if (input["requests"][turnNum_rsp]["x"].asInt() >= 0 && input["requests"][turnNum_rsp]["y"].asInt() >= 0)
+				board[input["requests"][turnNum_rsp]["x"].asInt()][input["requests"][turnNum_rsp]["y"].asInt()] = 2;
+			//保存对手走的最后一步棋到全局变量x,y
+			x = input["requests"][turnNum_rsp]["x"].asInt();
+			y = input["requests"][turnNum_rsp]["y"].asInt();
+		}
+	}
 }
 //扩展 考虑扩展的时候返回的是否为终局节点
 Node * expand(Node* n) {
@@ -399,12 +516,6 @@ Node * simulate(Node* n) {
 	return n;
 }
 
-//反向传播？？
-/*
-void packPropagation(Node* n) {
-
-}
-*/
 
 void printBoard() {
 	//棋盘状态
@@ -436,10 +547,14 @@ int main() {
 	memset(board, 0, sizeof(board));
 	double duration = 0;	//运行时间
 	clock_t timeStart = clock();
-	//string str = string("{\"requests\":[{\"x\":-1,\"y\":-1},{\"x\":0,\"y\":14},{\"x\":1,\"y\":4},{\"x\":11,\"y\":1},{\"x\":4,\"y\":14},{\"x\":11,\"y\":12},{\"x\":0,\"y\":4},{\"x\":0,\"y\":8},{\"x\":7,\"y\":6},{\"x\":7,\"y\":0},{\"x\":12,\"y\":3},{\"x\":7,\"y\":2},{\"x\":5,\"y\":4},{\"x\":6,\"y\":4},{\"x\":8,\"y\":2},{\"x\":13,\"y\":10},{\"x\":1,\"y\":1},{\"x\":14,\"y\":3},{\"x\":5,\"y\":11},{\"x\":0,\"y\":2},{\"x\":5,\"y\":1},{\"x\":12,\"y\":13},{\"x\":4,\"y\":13},{\"x\":10,\"y\":2},{\"x\":0,\"y\":9},{\"x\":1,\"y\":8},{\"x\":11,\"y\":4},{\"x\":11,\"y\":11},{\"x\":14,\"y\":9},{\"x\":6,\"y\":1},{\"x\":12,\"y\":12},{\"x\":5,\"y\":0},{\"x\":0,\"y\":11},{\"x\":3,\"y\":11},{\"x\":13,\"y\":1},{\"x\":8,\"y\":0},{\"x\":3,\"y\":5},{\"x\":9,\"y\":4},{\"x\":10,\"y\":7},{\"x\":10,\"y\":5},{\"x\":13,\"y\":9},{\"x\":10,\"y\":6},{\"x\":8,\"y\":1},{\"x\":4,\"y\":12},{\"x\":6,\"y\":9},{\"x\":10,\"y\":14},{\"x\":14,\"y\":4},{\"x\":7,\"y\":1},{\"x\":13,\"y\":0},{\"x\":13,\"y\":14},{\"x\":10,\"y\":4},{\"x\":3,\"y\":4},{\"x\":4,\"y\":8},{\"x\":7,\"y\":12},{\"x\":4,\"y\":4},{\"x\":4,\"y\":6},{\"x\":7,\"y\":13},{\"x\":8,\"y\":6},{\"x\":13,\"y\":7},{\"x\":5,\"y\":12},{\"x\":2,\"y\":14},{\"x\":12,\"y\":14},{\"x\":7,\"y\":7},{\"x\":5,\"y\":9},{\"x\":11,\"y\":2},{\"x\":9,\"y\":3},{\"x\":8,\"y\":11},{\"x\":12,\"y\":8},{\"x\":9,\"y\":8},{\"x\":8,\"y\":9},{\"x\":5,\"y\":14}],\"responses\":[{\"x\":6,\"y\":2},{\"x\":11,\"y\":7},{\"x\":7,\"y\":11},{\"x\":3,\"y\":14},{\"x\":3,\"y\":3},{\"x\":11,\"y\":6},{\"x\":8,\"y\":13},{\"x\":9,\"y\":12},{\"x\":5,\"y\":8},{\"x\":9,\"y\":0},{\"x\":9,\"y\":5},{\"x\":12,\"y\":6},{\"x\":5,\"y\":5},{\"x\":2,\"y\":4},{\"x\":14,\"y\":14},{\"x\":9,\"y\":9},{\"x\":11,\"y\":3},{\"x\":10,\"y\":1},{\"x\":10,\"y\":9},{\"x\":5,\"y\":3},{\"x\":1,\"y\":3},{\"x\":12,\"y\":1},{\"x\":13,\"y\":6},{\"x\":2,\"y\":13},{\"x\":0,\"y\":1},{\"x\":2,\"y\":0},{\"x\":6,\"y\":12},{\"x\":3,\"y\":13},{\"x\":9,\"y\":13},{\"x\":9,\"y\":11},{\"x\":12,\"y\":10},{\"x\":6,\"y\":13},{\"x\":2,\"y\":7},{\"x\":14,\"y\":5},{\"x\":2,\"y\":2},{\"x\":4,\"y\":2},{\"x\":1,\"y\":5},{\"x\":14,\"y\":12},{\"x\":3,\"y\":10},{\"x\":13,\"y\":4},{\"x\":13,\"y\":13},{\"x\":1,\"y\":9},{\"x\":12,\"y\":9},{\"x\":5,\"y\":2},{\"x\":10,\"y\":8},{\"x\":7,\"y\":3},{\"x\":4,\"y\":1},{\"x\":2,\"y\":6},{\"x\":5,\"y\":13},{\"x\":6,\"y\":6},{\"x\":6,\"y\":11},{\"x\":8,\"y\":14},{\"x\":6,\"y\":7},{\"x\":0,\"y\":0},{\"x\":1,\"y\":2},{\"x\":13,\"y\":2},{\"x\":10,\"y\":11},{\"x\":8,\"y\":4},{\"x\":6,\"y\":10},{\"x\":6,\"y\":0},{\"x\":1,\"y\":7},{\"x\":2,\"y\":1},{\"x\":12,\"y\":7},{\"x\":8,\"y\"") + string(":12},{\"x\":6,\"y\":3},{\"x\":9,\"y\":14},{\"x\":3,\"y\":8},{\"x\":6,\"y\":5},{\"x\":7,\"y\":8},{\"x\":6,\"y\":8}]}");
-	//string str = string("{\"requests\":[{\"x\":-1,\"y\":-1}],\"responses\":[]}");
+	
 	string str;
+	
+#ifdef DEBUG
+	str = string("{\"requests\":[{\"x\":-1,\"y\":-1}],\"responses\":[]}");
+#else
 	getline(cin, str);
+#endif // DEBUG
 	RecoverBoard(str);
 	Node * leaf = nullptr;
 

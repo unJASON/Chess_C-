@@ -42,3 +42,5 @@ Debug/
 *.vcxproj
 *.filters
 *.user
+*.tlog
+out.txt
