@@ -44,3 +44,4 @@ Debug/
 *.user
 *.tlog
 out.txt
+*.pdb
