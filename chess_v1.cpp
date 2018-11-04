@@ -320,8 +320,7 @@ Node * select(Node* n) {
 			board[x][y] = 0;
 		}
 
-	}
-	else if (n->newChild) {
+	}else if (n->newChild) {
 		bestChild = n->newChild;
 		n->newChild = bestChild->nxt;
 		bestChild->nxt = n->first;
@@ -800,7 +799,6 @@ Node * simulate(Node* n) {
 		}
 		return n;
 	}
-
 	int opp = n->color;
 	int own = 1;
 	if (n->color == 1) own = 2;
@@ -810,54 +808,36 @@ Node * simulate(Node* n) {
 	int thisBoard[15][15];
 	//用新棋盘模拟
 	memcpy(thisBoard, board, sizeof(thisBoard));
-
 	for (int i = 0; i < 15; ++i) {
 		for (int j = 0; j < 15; ++j) {
 			if (thisBoard[i][j]) ++cnt;
 		}
 	}
-
 	int pos = 0, x, y;
-
 	//一次性模拟到终局
 	while (cnt <= 225) {
-		//???
-		if (cnt == 3) {
-			pos = uidis(engine);
-			//pos = xorshf96() % 225;
-			if (pos > 180) {
-				pos = 225;
-			}
+		for (;;) {
+			pos = xorshf96() % 225;
+			//随机取数
+			//pos = uidis(engine);
+			x = pos / 15;
+			y = pos % 15;
+			if (!thisBoard[x][y]) break;
 		}
-
-		if (pos < 225) {
-			for (;;) {
-				//pos = xorshf96() % 225;
-				//随机取数
-				pos = uidis(engine);
-				x = pos / 15;
-				y = pos % 15;
-				if (!thisBoard[x][y]) break;
-			}
-
-			int jg = judge(thisBoard, own, x, y);
-
-			++cnt;
-			thisBoard[x][y] = own;
-
-			if (jg) {
-				n->success = jg;
-				if (jg == 1) ++(n->QB);
-				else if (jg == 2) ++(n->QW);
-
-				thisBoard[x][y] = 3;//这步没必要
-				return n;
-			}
-			//交换下次下棋的颜色
-			own ^= opp;
-			opp ^= own;
-			own ^= opp;
+		int jg = judge(thisBoard, own, x, y);
+		++cnt;
+		thisBoard[x][y] = own;
+		if (jg) {
+			n->success = jg;
+			if (jg == 1) ++(n->QB);
+			else if (jg == 2) ++(n->QW);
+			thisBoard[x][y] = 3;//这步没必要
+			return n;
 		}
+		//交换下次下棋的颜色
+		own ^= opp;
+		opp ^= own;
+		own ^= opp;
 		pos = 0;
 	}
 	n->success = -1;
