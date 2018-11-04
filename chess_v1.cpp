@@ -10,7 +10,7 @@
 using namespace std;
 int board[15][15];
 int sec = 1000;
-const double RuningTime =0.95f;
+const double RuningTime = 0.95f;
 float confident = 1.96;
 int equivalence = 1000;
 int x = -1;//最后一步下的地方
@@ -320,7 +320,8 @@ Node * select(Node* n) {
 			board[x][y] = 0;
 		}
 
-	}else if (n->newChild) {
+	}
+	else if (n->newChild) {
 		bestChild = n->newChild;
 		n->newChild = bestChild->nxt;
 		bestChild->nxt = n->first;
@@ -366,7 +367,7 @@ void judgeScore(int(*board)[15], int color, int x, int y);
 const int SIZE = 15;
 //返回评估后的点(需要通过评估函数进行剪枝运算)
 Node * euldVis(Node * n) {
-	
+
 	int c = 1;
 	if (n->color == 1) c = 2;
 	int  cnt = 0;
@@ -403,11 +404,11 @@ Node * euldVis(Node * n) {
 			if (board[i][j]) continue;
 			if (true) {
 				//算分
-				judgeScore(board,c,i,j);
+				judgeScore(board, c, i, j);
 			}
 		}
 	}
-	
+
 
 	sort(pointScore, pointScore + 15 * 15, cmpScore);
 	for (int i = 0; i < expand_CNT; ++i) {
@@ -417,6 +418,18 @@ Node * euldVis(Node * n) {
 #endif 
 		u->nxt = v;
 		v = u;
+	}
+	//加上可能活三的点
+	int final_exp = expand_CNT;
+	while (true){
+		if (pointScore[final_exp].score >= 222000){
+			u = new Node(c, n->color, pointScore[final_exp].x, pointScore[final_exp].y, n);
+			u->nxt = v;
+			v = u;
+			final_exp++;
+		}else{
+			break;
+		}
 	}
 	return u;
 }
@@ -445,15 +458,20 @@ void judgeScore(int(*board)[15], int color, int x, int y) {
 		for (int j = 0; j < 4; ++j) {
 			nx += fx[i];
 			ny += fy[i];
-			//遇到边界
-			if (nx < 0 || nx>14 || ny < 0 || ny>14) break;
+			//遇到边界停下并减分
+			if (nx < 0 || nx>14 || ny < 0 || ny>14) {
+				blankNum = 0;
+				selfScore = selfScore / 10;
+				break;
+			}
 			if (board[nx][ny] == color) {//遇到自己的颜色
 				//遇到相同颜色则求和
 				blankNum = 0;
-				selfScore = selfScore + weight*10;
+				selfScore = selfScore + weight * 10;
 				weight = weight * 10;
-			}else if (board[nx][ny] == opp){//遇到对手的颜色
-				//停下并减分
+			}
+			else if (board[nx][ny] == opp) {//遇到对手的颜色
+			   //停下并减分
 				blankNum = 0;
 				selfScore = selfScore / 10;
 				break;
@@ -461,13 +479,14 @@ void judgeScore(int(*board)[15], int color, int x, int y) {
 			else {	//没有棋子
 				if (blankNum > 1) {
 					break;
-				}else{
+				}
+				else {
 					//连续空白最好不要太多
 					blankNum++;
 					weight = weight / 10;
 					continue;
 				}
-				
+
 			}
 		}
 		//另外一个方向重新计数
@@ -477,22 +496,29 @@ void judgeScore(int(*board)[15], int color, int x, int y) {
 		for (int j = 0; j < 4; ++j) {
 			nx += tx[i];
 			ny += ty[i];
-			//遇到边界
-			if (nx < 0 || nx>14 || ny < 0 || ny>14) break;
-			if (board[nx][ny] == color) {
-				//遇到相同颜色则求和
-				blankNum = 0;
-				selfScore = selfScore + weight*10;
-				weight = weight * 10;
-			}else if (board[nx][ny] == opp) {//遇到对手的颜色
-				//停下并减分
+			//遇到边界停下并减分
+			if (nx < 0 || nx>14 || ny < 0 || ny>14) {
 				blankNum = 0;
 				selfScore = selfScore / 10;
 				break;
-			}else {
+			}
+			if (board[nx][ny] == color) {
+				//遇到相同颜色则求和
+				blankNum = 0;
+				selfScore = selfScore + weight * 10;
+				weight = weight * 10;
+			}
+			else if (board[nx][ny] == opp) {//遇到对手的颜色
+			   //停下并减分
+				blankNum = 0;
+				selfScore = selfScore / 10;
+				break;
+			}
+			else {
 				if (blankNum > 1) {
 					break;
-				}else {
+				}
+				else {
 					//连续空白最好不要太多
 					blankNum++;
 					weight = weight / 10;
@@ -509,12 +535,16 @@ void judgeScore(int(*board)[15], int color, int x, int y) {
 		for (int j = 0; j < 4; ++j) {
 			nx += fx[i];
 			ny += fy[i];
-			//遇到边界
-			if (nx < 0 || nx>14 || ny < 0 || ny>14) break;
+			//遇到边界停下并减分
+			if (nx < 0 || nx>14 || ny < 0 || ny>14) {
+				blankNum = 0;
+				oppScore = oppScore / 10;
+				break;
+			}
 			if (board[nx][ny] == opp) {//遇到对手的颜色
 				//遇到相同颜色则求和
 				blankNum = 0;
-				oppScore = oppScore+weight * 10;
+				oppScore = oppScore + weight * 10;
 				weight = weight * 10;
 			}
 			else if (board[nx][ny] == color) {//遇到自己的颜色
@@ -543,15 +573,19 @@ void judgeScore(int(*board)[15], int color, int x, int y) {
 		for (int j = 0; j < 4; ++j) {
 			nx += tx[i];
 			ny += ty[i];
-			//遇到边界跳出
-			if (nx < 0 || nx>14 || ny < 0 || ny>14) break;
-			if (board[nx][ny] == opp){
+			//遇到边界停下并减分
+			if (nx < 0 || nx>14 || ny < 0 || ny>14) {
+				blankNum = 0;
+				oppScore = oppScore / 10;
+				break;
+			}
+			if (board[nx][ny] == opp) {
 				//遇到相同颜色则求和
 				blankNum = 0;
 				oppScore = oppScore + weight * 10;
 				weight = weight * 10;
 			}
-			else if (board[nx][ny] == color){//遇到自己的颜色减分跳出
+			else if (board[nx][ny] == color) {//遇到自己的颜色减分跳出
 				blankNum = 0;
 				oppScore = oppScore / 10;
 				break;
@@ -573,7 +607,7 @@ void judgeScore(int(*board)[15], int color, int x, int y) {
 		total_selfScore = total_selfScore + selfScore;
 	}
 	//pointScore[x*SIZE + y].score = selfScore > oppScore ? selfScore : oppScore;
-	pointScore[x*SIZE + y].score = total_oppScore +total_selfScore;
+	pointScore[x*SIZE + y].score = total_oppScore + total_selfScore;
 }
 
 //判断输赢，如果赢则返回颜色，如果未赢则返回0
@@ -581,7 +615,7 @@ int judge(int(*board)[15], int color, int x, int y) {
 	int chains = 0;
 	int nx;
 	int ny;
-	
+
 	for (int i = 0; i < 4; ++i) {
 		nx = x;
 		ny = y;

@@ -45,3 +45,4 @@ Debug/
 *.tlog
 out.txt
 *.pdb
+Release/vc141.pdb
