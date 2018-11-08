@@ -18,8 +18,9 @@ int y = -1;//最后一步下的地方
 
 //扩展的点数
 const int expand_CNT = 15;
+//评估函数初始权值
+const int INITWEIGHT = 10000;
 
-//const double C = 1.0f;
 const double C = 1.0f;
 
 //产生随机数
@@ -37,177 +38,6 @@ bool cmpScore(const Point & a, const Point & b) {
 }
 //存储score
 Point pointScore[256];
-
-//棋型辨识数组 
-int score[3][3][3][3][3][3];
-//以下为各棋型的识别码  //权重
-#define WIN 1 //4000
-#define LOSE 2 //-4000
-#define FLEX4 3 //2000
-#define flex4 4 //-2000
-#define BLOCK4 5 //1000
-#define block4 6 //-1000 
-#define FLEX3 7 //1000 ?
-#define flex3 8 //-1000
-#define BLOCK3 9 //400 ?
-#define block3 10 //-600 ? 
-#define FLEX2 11 //400 ?
-#define flex2 12 //-600 ?
-#define BLOCK2 13 //100 ?
-#define block2 14 //-150 ?
-#define FLEX1 15 //100 ?
-#define flex1 16 //-150 ?
-int init_score()
-{
-	//黑五连 AI胜 (这里的黑不是指先手，而是指AI)
-	score[1][1][1][1][1][1] = WIN;
-	score[1][1][1][1][1][0] = WIN;
-	score[0][1][1][1][1][1] = WIN;
-	score[1][1][1][1][1][2] = WIN;
-	score[2][1][1][1][1][1] = WIN;
-	//白五连 AI负
-	score[2][2][2][2][2][2] = LOSE;
-	score[2][2][2][2][2][0] = LOSE;
-	score[0][2][2][2][2][2] = LOSE;
-	score[2][2][2][2][2][1] = LOSE;
-	score[1][2][2][2][2][2] = LOSE;
-	//黑活四
-	score[0][1][1][1][1][0] = FLEX4;
-	//白活四
-	score[0][2][2][2][2][0] = flex4;
-	//黑活三
-	score[0][1][1][1][0][0] = FLEX3;
-	score[0][1][1][0][1][0] = FLEX3;
-	score[0][1][0][1][1][0] = FLEX3;
-	score[0][0][1][1][1][0] = FLEX3;
-	//白活三
-	score[0][2][2][2][0][0] = flex3;
-	score[0][2][2][0][2][0] = flex3;
-	score[0][2][0][2][2][0] = flex3;
-	score[0][0][2][2][2][0] = flex3;
-	//黑活二
-	score[0][1][1][0][0][0] = FLEX2;
-	score[0][1][0][1][0][0] = FLEX2;
-	score[0][1][0][0][1][0] = FLEX2;
-	score[0][0][1][1][0][0] = FLEX2;
-	score[0][0][1][0][1][0] = FLEX2;
-	score[0][0][0][1][1][0] = FLEX2;
-	//白活二
-	score[0][2][2][0][0][0] = flex2;
-	score[0][2][0][2][0][0] = flex2;
-	score[0][2][0][0][2][0] = flex2;
-	score[0][0][2][2][0][0] = flex2;
-	score[0][0][2][0][2][0] = flex2;
-	score[0][0][0][2][2][0] = flex2;
-	//黑活一
-	score[0][1][0][0][0][0] = FLEX1;
-	score[0][0][1][0][0][0] = FLEX1;
-	score[0][0][0][1][0][0] = FLEX1;
-	score[0][0][0][0][1][0] = FLEX1;
-	//白活一
-	score[0][2][0][0][0][0] = flex1;
-	score[0][0][2][0][0][0] = flex1;
-	score[0][0][0][2][0][0] = flex1;
-	score[0][0][0][0][2][0] = flex1;
-
-
-	int p1, p2, p3, p4, p5, p6, x, y, ix, iy;
-
-	for (p1 = 0; p1 < 3; p1++)
-	{
-		for (p2 = 0; p2 < 3; p2++)
-		{
-			for (p3 = 0; p3 < 3; p3++)
-			{
-				for (p4 = 0; p4 < 3; p4++)
-				{
-					for (p5 = 0; p5 < 3; p5++)
-					{
-						for (p6 = 0; p6 < 3; p6++)
-						{
-							x = 0;
-							y = 0;
-							ix = 0;
-							iy = 0;
-							if (p1 == 1) x++;
-							else if (p1 == 2) y++;
-							if (p2 == 1) x++, ix++;
-							else if (p2 == 2) y++, iy++;
-							if (p3 == 1) x++, ix++;
-							else if (p3 == 2) y++, iy++;
-							if (p4 == 1) x++, ix++;
-							else if (p4 == 2) y++, iy++;
-							if (p5 == 1) x++, ix++;
-							else if (p5 == 2) y++, iy++;
-							if (p6 == 1) ix++;
-							else if (p6 == 2) iy++;
-
-							//黑冲四 
-							if (x == 4 && y == 0 || ix == 4 && iy == 0)
-							{
-								if (score[p1][p2][p3][p4][p5][p6] == 0)
-								{
-									score[p1][p2][p3][p4][p5][p6] = BLOCK4;
-								}
-							}
-
-							//白冲四 
-							else if (x == 0 && y == 4 || ix == 0 && iy == 4)
-							{
-								if (score[p1][p2][p3][p4][p5][p6] == 0)
-								{
-									score[p1][p2][p3][p4][p5][p6] = block4;
-								}
-							}
-
-							//黑眠三 
-							else if (x == 3 && y == 0 || ix == 3 && iy == 0)
-							{
-								if (score[p1][p2][p3][p4][p5][p6] == 0)
-								{
-									score[p1][p2][p3][p4][p5][p6] = BLOCK3;
-								}
-							}
-
-							//白眠三 
-							else if (x == 0 && y == 3 || ix == 0 && iy == 3)
-							{
-								if (score[p1][p2][p3][p4][p5][p6] == 0)
-								{
-									score[p1][p2][p3][p4][p5][p6] = block3;
-								}
-							}
-
-							//黑眠二
-							else if (x == 2 && y == 0 || ix == 2 && iy == 0)
-							{
-								if (score[p1][p2][p3][p4][p5][p6] == 0)
-								{
-									score[p1][p2][p3][p4][p5][p6] = BLOCK2;
-								}
-							}
-
-							//白眠二
-							else if (x == 0 && y == 2 || ix == 0 && iy == 2)
-							{
-								if (score[p1][p2][p3][p4][p5][p6] == 0)
-								{
-									score[p1][p2][p3][p4][p5][p6] = block2;
-								}
-							}
-
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return 0;
-}
-
-
-
 
 static unsigned long x_random = 123456789, y_random = 362436069, z_random = 521288629;
 inline unsigned long xorshf96(void) {          //period 2^96-1
@@ -297,6 +127,12 @@ Node * select(Node* n) {
 	if (!n->hasExpanded) {
 		expand(n);
 		n->hasExpanded = true;
+		//当扩展到最后一个节点后，应当注意此时棋盘上所有点都被占据了！！！再也没有child了。。
+		if (n->newChild == NULL) {
+			n->isTerminated = true;
+			n->success = -1;
+			return n;
+		}
 	}
 	Node * leaf = nullptr;
 
@@ -319,7 +155,7 @@ Node * select(Node* n) {
 			leaf = select(bestChild);
 			board[x][y] = 0;
 		}
-
+		
 	}else if (n->newChild) {
 		bestChild = n->newChild;
 		n->newChild = bestChild->nxt;
@@ -327,8 +163,9 @@ Node * select(Node* n) {
 		n->first = bestChild;
 
 		leaf = simulate(bestChild);
-
+		
 	}
+	
 	//反向传播带回输赢
 	if (leaf->success == 1) {
 		++(n->QB);
@@ -378,7 +215,7 @@ Node * euldVis(Node * n) {
 		for (int j = 0; j < SIZE; ++j) {
 			pointScore[i*SIZE + j].x = i;
 			pointScore[i*SIZE + j].y = j;
-			pointScore[i*SIZE + j].score = -1000;
+			pointScore[i*SIZE + j].score = -INITWEIGHT*10;
 		}
 	}
 	for (int i = 0; i < 15; ++i) {
@@ -407,16 +244,22 @@ Node * euldVis(Node * n) {
 			}
 		}
 	}
-
-
+#ifdef DEBUG
+	//cout <<"4,9:"<<pointScore[4 * 15 + 9].score<<endl;
+	//cout <<"10,9:"<<pointScore[10 * 15 + 9].score<<endl;
+#endif
 	sort(pointScore, pointScore + 15 * 15, cmpScore);
 	for (int i = 0; i < expand_CNT; ++i) {
-		u = new Node(c, n->color, pointScore[i].x, pointScore[i].y, n);
+		//可能棋盘最后没有那么多点了，所以要考虑到
+		if (!board[pointScore[i].x][pointScore[i].y]) {
+
+			u = new Node(c, n->color, pointScore[i].x, pointScore[i].y, n);
 #ifdef DEBUG
-		//cout <<"x:"<< pointScore[i].x<<"y:"<< pointScore[i].y <<"score:" << pointScore[i].score<<endl;
+			//cout <<"x:"<< pointScore[i].x<<"y:"<< pointScore[i].y <<"score:" << pointScore[i].score<<endl;
 #endif 
-		u->nxt = v;
-		v = u;
+			u->nxt = v;
+			v = u;
+		}
 	}
 	//加上可能活三的点
 	int final_exp = expand_CNT;
@@ -434,7 +277,6 @@ Node * euldVis(Node * n) {
 }
 
 //color 我的颜色
-const int INITWEIGHT = 1000;
 void judgeScore(int(*board)[15], int color, int x, int y) {
 	//printBoard();
 	int opp = 1;
@@ -787,6 +629,24 @@ Node * expand(Node* n) {
 	return n;
 }
 
+//随机序列生成
+int* buildRandomSequence(int length) {
+	int* array = new int[length];
+	for (int i = 0; i < length; i++) {
+		array[i] = i;
+	}
+	int x = 0, tmp = 0;
+	for (int i = length - 1; i > 0; i--) {
+		//x = random.next(0, i + 1);
+		//x = xorshf96() % i;
+		x = uidis(engine) % i;
+		tmp = array[i];
+		array[i] = array[x];
+		array[x] = tmp;
+	}
+	return array;
+}
+
 //模拟
 Node * simulate(Node* n) {
 	++(n->N);
@@ -808,21 +668,33 @@ Node * simulate(Node* n) {
 	int thisBoard[15][15];
 	//用新棋盘模拟
 	memcpy(thisBoard, board, sizeof(thisBoard));
+	bool board_Flag[225];
+	memset(board_Flag, false, sizeof(board_Flag));
+	
 	for (int i = 0; i < 15; ++i) {
 		for (int j = 0; j < 15; ++j) {
-			if (thisBoard[i][j]) ++cnt;
+			if (thisBoard[i][j]) {
+				++cnt;
+				board_Flag[i * 15 + j] = true;
+			}
 		}
 	}
-	int pos = 0, x, y;
+	int pos=0 , i=0, x, y;
 	//一次性模拟到终局
+	int* rand_perm = buildRandomSequence(SIZE*SIZE);
+	
 	while (cnt <= 225) {
-		for (;;) {
-			pos = xorshf96() % 225;
-			//随机取数
-			//pos = uidis(engine);
-			x = pos / 15;
-			y = pos % 15;
-			if (!thisBoard[x][y]) break;
+		for (;i<225;) {
+			if ( board_Flag[ rand_perm[i] ] ){
+				//已经存在则取下一个
+				i++;
+			}else{
+				pos = rand_perm[i];
+ 				x = pos / 15;
+				y = pos % 15;
+				i++;
+				break;
+			}
 		}
 		int jg = judge(thisBoard, own, x, y);
 		++cnt;
@@ -849,11 +721,11 @@ void printBoard() {
 	//棋盘状态
 	for (int i = 0; i < 15; i++) {
 		for (int j = 0; j < 15; j++) {
-			if (board[i][j] == 0)
-				std::cout << '0';
-			else if (board[i][j] == 1)
-				std::cout << '*';
-			else std::cout << '#';
+			if (board[j][i] == 0)
+				std::cout << "0 ";
+			else if (board[j][i] == 1)
+				std::cout << "* ";
+			else std::cout << "# ";
 		}
 		std::cout << '\n';
 	}
@@ -879,14 +751,40 @@ int main() {
 	string str;
 
 #ifdef DEBUG
-	str = string("{\"requests\":[{\"x\":-1,\"y\":-1},{\"x\":7,\"y\":7}],\"responses\":[{\"x\":0,\"y\":0}]}");
+	str = string("{\"requests\":[{\"x\":-1,\"y\":-1},{\"x\":6,\"y\":9},{\"x\":7,\"y\":9},{\"x\":9,\"y\":10},{\"x\":10,\"y\":7},{\"x\":6,\"y\":8},{\"x\":8,\"y\":7},{\"x\":5,\"y\":12},{\"x\":10,\"y\":8},{\"x\":7,\"y\":7},{\"x\":11,\"y\":11},{\"x\":9,\"y\":5},{\"x\":8,\"y\":11},{\"x\":11,\"y\":6},{\"x\":5,\"y\":10},{\"x\":7,\"y\":11},{\"x\":11,\"y\":5},{\"x\":12,\"y\":8},{\"x\":6,\"y\":14},{\"x\":12,\"y\":9},{\"x\":6,\"y\":6},{\"x\":7,\"y\":13},{\"x\":6,\"y\":4},{\"x\":4,\"y\":5},{\"x\":12,\"y\":3},{\"x\":7,\"y\":3},{\"x\":8,\"y\":5},{\"x\":10,\"y\":4},{\"x\":6,\"y\":5},{\"x\":6,\"y\":1},{\"x\":9,\"y\":2},{\"x\":10,\"y\":9},{\"x\":5,\"y\":2},{\"x\":13,\"y\":10},{\"x\":8,\"y\":0},{\"x\":11,\"y\":1},{\"x\":12,\"y\":14},{\"x\":13,\"y\":5},{\"x\":5,\"y\":8},{\"x\":2,\"y\":6},{\"x\":10,\"y\":3},{\"x\":1,\"y\":9},{\"x\":5,\"y\":7},{\"x\":7,\"y\":1},{\"x\":3,\"y\":4},{\"x\":3,\"y\":9},{\"x\":1,\"y\":3},{\"x\":4,\"y\":7},{\"x\":6,\"y\":3},{\"x\":2,\"y\":11},{\"x\":4,\"y\":10},{\"x\":0,\"y\":11},{\"x\":0,\"y\":5},{\"x\":4,\"y\":12},{\"x\":0,\"y\":8},{\"x\":4,\"y\":3},{\"x\":10,\"y\":12},{\"x\":2,\"y\":2},{\"x\":1,\"y\":8},{\"x\":14,\"y\":2},{\"x\":4,\"y\":2},{\"x\":3,\"y\":2},{\"x\":3,\"y\":13},{\"x\":3,\"y\":1},{\"x\":4,\"y\":0},{\"x\":14,\"y\":10},{\"x\":0,\"y\":0},{\"x\":1,\"y\":14},{\"x\":7,\"y\":14},{\"x\":12,\"y\":6},{\"x\":14,\"y\":8},{\"x\":14,\"y\":7},{\"x\":10,\"y\":13},{\"x\":13,\"y\":0},{\"x\":11,\"y\":13},{\"x\":9,\"y\":13},{\"x\":12,\"y\":13},{\"x\":11,\"y\":12},{\"x\":13,\"y\":14},{\"x\":12,\"y\":12},{\"x\":14,\"y\":12},{\"x\":14,\"y\":14},{\"x\":10,\"y\":14}],\"responses\":[{\"x\":7,\"y\":10},{\"x\":7,\"y\":8},{\"x\":8,\"y\":9},{\"x\":9,\"y\":8},{\"x\":8,\"y\":8},{\"x\":8,\"y\":10},{\"x\":6,\"y\":11},{\"x\":9,\"y\":9},{\"x\":10,\"y\":10},{\"x\":9,\"y\":7},{\"x\":10,\"y\":6},{\"x\":8,\"y\":6},{\"x\":9,\"y\":6},{\"x\":6,\"y\":10},{\"x\":6,\"y\":12},{\"x\":9,\"y\":11},{\"x\":11,\"y\":9},{\"x\":6,\"y\":13},{\"x\":11,\"y\":8},{\"x\":10,\"y\":5},{\"x\":11,\"y\":4},{\"x\":7,\"y\":5},{\"x\":6,\"y\":7},{\"x\":7,\"y\":4},{\"x\":7,\"y\":6},{\"x\":9,\"y\":4},{\"x\":8,\"y\":3},{\"x\":5,\"y\":6},{\"x\":12,\"y\":11},{\"x\":6,\"y\":2},{\"x\":11,\"y\":10},{\"x\":8,\"y\":2},{\"x\":12,\"y\":10},{\"x\":8,\"y\":4},{\"x\":9,\"y\":3},{\"x\":10,\"y\":2},{\"x\":11,\"y\":3},{\"x\":4,\"y\":6},{\"x\":5,\"y\":9},{\"x\":12,\"y\":5},{\"x\":5,\"y\":5},{\"x\":5,\"y\":3},{\"x\":3,\"y\":5},{\"x\":3,\"y\":6},{\"x\":7,\"y\":0},{\"x\":13,\"y\":11},{\"x\":8,\"y\":1},{\"x\":5,\"y\":4},{\"x\":1,\"y\":10},{\"x\":0,\"y\":10},{\"x\":4,\"y\":9},{\"x\":2,\"") + string("y\":7},{\"x\":5,\"y\":11},{\"x\":0,\"y\":6},{\"x\":2,\"y\":10},{\"x\":2,\"y\":5},{\"x\":4,\"y\":11},{\"x\":3,\"y\":10},{\"x\":11,\"y\":2},{\"x\":1,\"y\":5},{\"x\":4,\"y\":1},{\"x\":1,\"y\":2},{\"x\":0,\"y\":4},{\"x\":3,\"y\":0},{\"x\":2,\"y\":8},{\"x\":0,\"y\":3},{\"x\":4,\"y\":4},{\"x\":3,\"y\":11},{\"x\":8,\"y\":14},{\"x\":14,\"y\":4},{\"x\":13,\"y\":7},{\"x\":14,\"y\":9},{\"x\":13,\"y\":8},{\"x\":7,\"y\":12},{\"x\":11,\"y\":7},{\"x\":8,\"y\":13},{\"x\":13,\"y\":13},{\"x\":8,\"y\":12},{\"x\":10,\"y\":11},{\"x\":9,\"y\":12},{\"x\":13,\"y\":12},{\"x\":7,\"y\":2}]}");
 #else
 	getline(cin, str);
 #endif // DEBUG
 	RecoverBoard(str);
+
+	//******************************************************
+	//己方执白，第4回合则主动换手
+	//解析Json数据
+	Json::Reader reader;
+	Json::Value input;
+	reader.parse(str, input);
+	//分析input输入和之前的输出，Recover棋盘
+	int turnNum_rsp = input["responses"].size();
+	int turnNum_req = input["requests"].size();
+	//对方先手
+	int zero = 0;
+	if (input["requests"][zero]["x"] != -1 && turnNum_rsp==1)
+	{
+		Json::Value ret;
+		Json::Value act;
+		act["x"] = -1;
+		act["y"] = -1;
+
+		ret["response"] = act;
+		Json::FastWriter writer;
+		std::cout << writer.write(ret) << endl;
+		return 0;
+	}
+	//*****************************************************
+
 	Node * leaf = nullptr;
 	int color = 2;
-
+	
 	int turn = 1;
 	root = new Node(color, turn, x, y, nullptr);
 
@@ -905,7 +803,7 @@ int main() {
 			if (v) {
 #ifdef DEBUG
 				cout << v->x << " " << v->y << " " << endl;
-				board[v->x][v->y] = v->color + 2;
+				board[v->x][v->y] = v->color;
 				printBoard();
 #endif
 
