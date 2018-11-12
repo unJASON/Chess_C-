@@ -250,10 +250,6 @@ Node * euldVis(Node * n) {
 			}
 		}
 	}
-#ifdef DEBUG
-	//cout <<"4,9:"<<pointScore[4 * 15 + 9].score<<endl;
-	//cout <<"10,9:"<<pointScore[10 * 15 + 9].score<<endl;
-#endif
 	sort(pointScore, pointScore + 15 * 15, cmpScore);
 	
 	//静态评估函数估分需要使用
@@ -264,9 +260,9 @@ Node * euldVis(Node * n) {
 		}
 	}
 	int final_exp = expand_CNT;
-	
+	int dbthree_score = 444000;	//双活
 	while (true) {
-		if (pointScore[final_exp].score >= 222000) {
+		if (pointScore[final_exp].score >= dbthree_score) {
 			levelScore = levelScore + pointScore[final_exp].score;
 			final_exp++;
 		}
@@ -277,11 +273,7 @@ Node * euldVis(Node * n) {
 	for (int i = 0; i < expand_CNT; ++i) {
 		//可能棋盘最后没有那么多点了，所以要考虑到
 		if (!board[pointScore[i].x][pointScore[i].y]) {
-
 			u = new Node(c, n->color, pointScore[i].x, pointScore[i].y,pointScore[i].score,levelScore, n);
-#ifdef DEBUG
-			//cout <<"x:"<< pointScore[i].x<<"y:"<< pointScore[i].y <<"score:" << pointScore[i].score<<endl;
-#endif 
 			u->nxt = v;
 			v = u;
 		}
@@ -290,7 +282,7 @@ Node * euldVis(Node * n) {
 	//加上可能活三的点
 	final_exp = expand_CNT;
 	while (true){
-		if (pointScore[final_exp].score >= 444000){
+		if (pointScore[final_exp].score >= dbthree_score){
 			u = new Node(c, n->color, pointScore[final_exp].x, pointScore[final_exp].y, pointScore[final_exp].score,levelScore, n);
 			u->nxt = v;
 			v = u;
@@ -789,8 +781,9 @@ int main() {
 
 #ifdef DEBUG
 	//str = string("{\"requests\":[{\"x\":-1,\"y\":-1},{\"x\":4,\"y\":10},{\"x\":5,\"y\":10},{\"x\":4,\"y\":9},{\"x\":6,\"y\":8},{\"x\":5,\"y\":8},{\"x\":7,\"y\":4},{\"x\":2,\"y\":4}],\"responses\":[{\"x\":3,\"y\":9},{\"x\":5,\"y\":4},{\"x\":6,\"y\":10},{\"x\":6,\"y\":11},{\"x\":4,\"y\":4},{\"x\":6,\"y\":4},{\"x\":3,\"y\":4}]}");
-	str = string("{\"requests\":[{\"x\":-1,\"y\":-1},{\"x\":6,\"y\":8},{\"x\":9,\"y\":7},{\"x\":8,\"y\":7},{\"x\":6,\"y\":9},{\"x\":7,\"y\":7}],\"responses\":[{\"x\":7,\"y\":9},{\"x\":8,\"y\":8},{\"x\":8,\"y\":9},{\"x\":9,\"y\":9},{\"x\":10,\"y\":10}]}");
+	//str = string("{\"requests\":[{\"x\":-1,\"y\":-1},{\"x\":6,\"y\":8},{\"x\":9,\"y\":7},{\"x\":8,\"y\":7},{\"x\":6,\"y\":9},{\"x\":7,\"y\":7}],\"responses\":[{\"x\":7,\"y\":9},{\"x\":8,\"y\":8},{\"x\":8,\"y\":9},{\"x\":9,\"y\":9},{\"x\":10,\"y\":10}]}");
 	//str = string("{\"requests\":[{\"x\":-1,\"y\":-1},{\"x\":9,\"y\":3},{\"x\":-1,\"y\":-1},{\"x\":7,\"y\":5},{\"x\":8,\"y\":6},{\"x\":9,\"y\":7},{\"x\":6,\"y\":4},{\"x\":7,\"y\":4},{\"x\":5,\"y\":7},{\"x\":7,\"y\":8}],\"responses\":[{\"x\":8,\"y\":3},{\"x\":8,\"y\":8},{\"x\":7,\"y\":7},{\"x\":6,\"y\":8},{\"x\":8,\"y\":7},{\"x\":10,\"y\":8},{\"x\":5,\"y\":3},{\"x\":7,\"y\":9},{\"x\":7,\"y\":10}]}");
+	str = string("{\"requests\":[{\"x\":4,\"y\":4},{\"x\":5,\"y\":5},{\"x\":6,\"y\":6},{\"x\":5,\"y\":4},{\"x\":4,\"y\":6},{\"x\":5,\"y\":6},{\"x\":6,\"y\":7},{\"x\":6,\"y\":8},{\"x\":8,\"y\":7}],\"responses\":[{\"x\":4,\"y\":5},{\"x\":-1,\"y\":-1},{\"x\":6,\"y\":4},{\"x\":7,\"y\":3},{\"x\":6,\"y\":3},{\"x\":3,\"y\":6},{\"x\":7,\"y\":8},{\"x\":6,\"y\":9}]}");
 #else
 	getline(cin, str);
 #endif // DEBUG
@@ -866,11 +859,7 @@ int main() {
 #endif
 			}
 			else std::cout << "NULL PTR" << endl;
-
-
-
 			return 0;
-
 		}
 		else {
 			//MCTS
