@@ -55,10 +55,10 @@ inline unsigned long xorshf96(void) {          //period 2^96-1
 }
 
 //判断输赢需要用到的数组
-int fx[8] = {  0,-1,-1,-1, 0, 1, 1, 1 };
-int fy[8] = { -1, 0,-1, 1, 1, 0, 1,-1 };
-int tx[8] = {  0, 1, 1, 1, 0,-1,-1,-1 };
-int ty[8] = {  1, 0, 1,-1,-1, 0,-1, 1 };
+int fx[4] = { 0,-1,-1,-1 };
+int fy[4] = { -1,0,-1,1 };
+int tx[4] = { 0,1,1,1 };
+int ty[4] = { 1,0,1,-1 };
 
 //黑色:1 自己,白色:2 ，对手
 //节点数据结构
@@ -205,7 +205,10 @@ double evaluate(Node *r) {
 	//取权值，模拟次数越多则静态评估函数影响越小
 	return (s1 + s2)* (1-weight) + s3 * weight;
 }
-
+//评估局面返回最好的前N个点。
+Node * scoreBoard(Node * r) {
+	return NULL;
+}
 void judgeScore(int(*board)[15], int color, int x, int y);
 const int SIZE = 15;
 //返回评估后的点(需要通过评估函数进行剪枝运算)
@@ -246,10 +249,15 @@ Node * euldVis(Node * n) {
 		for (int j = 0; j < 15; ++j) {
 			if (board[i][j]) continue;
 			if (true) {
+				//算分
 				judgeScore(board, c, i, j);
 			}
 		}
 	}
+#ifdef DEBUG
+	//cout <<"4,9:"<<pointScore[4 * 15 + 9].score<<endl;
+	//cout <<"10,9:"<<pointScore[10 * 15 + 9].score<<endl;
+#endif
 	sort(pointScore, pointScore + 15 * 15, cmpScore);
 	
 	//静态评估函数估分需要使用
@@ -260,9 +268,9 @@ Node * euldVis(Node * n) {
 		}
 	}
 	int final_exp = expand_CNT;
-	int dbthree_score = 444000;	//双活
+	
 	while (true) {
-		if (pointScore[final_exp].score >= dbthree_score) {
+		if (pointScore[final_exp].score >= 222000) {
 			levelScore = levelScore + pointScore[final_exp].score;
 			final_exp++;
 		}
@@ -273,7 +281,11 @@ Node * euldVis(Node * n) {
 	for (int i = 0; i < expand_CNT; ++i) {
 		//可能棋盘最后没有那么多点了，所以要考虑到
 		if (!board[pointScore[i].x][pointScore[i].y]) {
+
 			u = new Node(c, n->color, pointScore[i].x, pointScore[i].y,pointScore[i].score,levelScore, n);
+#ifdef DEBUG
+			//cout <<"x:"<< pointScore[i].x<<"y:"<< pointScore[i].y <<"score:" << pointScore[i].score<<endl;
+#endif 
 			u->nxt = v;
 			v = u;
 		}
@@ -282,7 +294,7 @@ Node * euldVis(Node * n) {
 	//加上可能活三的点
 	final_exp = expand_CNT;
 	while (true){
-		if (pointScore[final_exp].score >= dbthree_score){
+		if (pointScore[final_exp].score >= 222000){
 			u = new Node(c, n->color, pointScore[final_exp].x, pointScore[final_exp].y, pointScore[final_exp].score,levelScore, n);
 			u->nxt = v;
 			v = u;
@@ -297,13 +309,6 @@ Node * euldVis(Node * n) {
 //color 我的颜色
 void judgeScore(int(*board)[15], int color, int x, int y) {
 	//printBoard();
-	//算分
-	/*if (x == 7 && y == 8) {
-		cout << "hello";
-	}
-	if (x == 4 && y == 8) {
-		cout << "hello";
-	}*/
 	int opp = 1;
 	if (color == 1) opp = 2;
 	int blankNum;	//连续空白不能太多
@@ -311,16 +316,15 @@ void judgeScore(int(*board)[15], int color, int x, int y) {
 	int ny;
 	int total_oppScore = 0;
 	int total_selfScore = 0;
-	int oppScore;
-	int selfScore;
+	int oppScore = INITWEIGHT;
+	int selfScore = INITWEIGHT;
 	int weight;	//记录联乘个数
 	//记录4个对角的方向算score并求和
-	for (int i = 0; i < 8; ++i) {
+	for (int i = 0; i < 4; ++i) {
 		//计算自己的分数
 		nx = x;
 		ny = y;
 		blankNum = 0;
-		selfScore = INITWEIGHT;//初始化自身分数
 		weight = INITWEIGHT;
 		for (int j = 0; j < 4; ++j) {
 			nx += fx[i];
@@ -399,9 +403,6 @@ void judgeScore(int(*board)[15], int color, int x, int y) {
 		ny = y;
 		blankNum = 0;
 		weight = INITWEIGHT;
-		//初始化对手分数
-		oppScore = INITWEIGHT;
-
 		for (int j = 0; j < 4; ++j) {
 			nx += fx[i];
 			ny += fy[i];
@@ -762,10 +763,10 @@ void printBoard() {
 }
 void printNode(Node * r) {
 	if (!r) return;
-	cout << "color " << r->color << " x " << r->x << " y " << r->y << " QB/QW/N " << r->QB << " " << r->QW << " " << r->N << " isTerminated " << r->isTerminated << " depth " << r->depth<<"score_p:"<<(double)(r->score)/(double) (r->levelScore)<<"score:"<<r->score << endl;
+	cout << "color " << r->color << " x " << r->x << " y " << r->y << " QB/QW/N " << r->QB << " " << r->QW << " " << r->N << " isTerminated " << r->isTerminated << " depth " << r->depth<<"score:"<<(double)(r->score)/(double) (r->levelScore) << endl;
 	for (Node *u = r->first; u; u = u->nxt) {
 		//printNode(u);
-		cout << "color " << u->color << " x " << u->x << " y " << u->y << " QB/QW/N " << u->QB << " " << u->QW << " " << u->N << " isTerminated " << u->isTerminated << " depth " << u->depth << "score_p:" << (double)(u->score)/ (double)(u->levelScore)<<"score:"<<u->score << endl;
+		cout << "color " << u->color << " x " << u->x << " y " << u->y << " QB/QW/N " << u->QB << " " << u->QW << " " << u->N << " isTerminated " << u->isTerminated << " depth " << u->depth << "score:" << (double)(u->score)/ (double)(u->levelScore) << endl;
 	}
 }
 int main() {
@@ -780,10 +781,7 @@ int main() {
 	string str;
 
 #ifdef DEBUG
-	//str = string("{\"requests\":[{\"x\":-1,\"y\":-1},{\"x\":4,\"y\":10},{\"x\":5,\"y\":10},{\"x\":4,\"y\":9},{\"x\":6,\"y\":8},{\"x\":5,\"y\":8},{\"x\":7,\"y\":4},{\"x\":2,\"y\":4}],\"responses\":[{\"x\":3,\"y\":9},{\"x\":5,\"y\":4},{\"x\":6,\"y\":10},{\"x\":6,\"y\":11},{\"x\":4,\"y\":4},{\"x\":6,\"y\":4},{\"x\":3,\"y\":4}]}");
-	//str = string("{\"requests\":[{\"x\":-1,\"y\":-1},{\"x\":6,\"y\":8},{\"x\":9,\"y\":7},{\"x\":8,\"y\":7},{\"x\":6,\"y\":9},{\"x\":7,\"y\":7}],\"responses\":[{\"x\":7,\"y\":9},{\"x\":8,\"y\":8},{\"x\":8,\"y\":9},{\"x\":9,\"y\":9},{\"x\":10,\"y\":10}]}");
-	//str = string("{\"requests\":[{\"x\":-1,\"y\":-1},{\"x\":9,\"y\":3},{\"x\":-1,\"y\":-1},{\"x\":7,\"y\":5},{\"x\":8,\"y\":6},{\"x\":9,\"y\":7},{\"x\":6,\"y\":4},{\"x\":7,\"y\":4},{\"x\":5,\"y\":7},{\"x\":7,\"y\":8}],\"responses\":[{\"x\":8,\"y\":3},{\"x\":8,\"y\":8},{\"x\":7,\"y\":7},{\"x\":6,\"y\":8},{\"x\":8,\"y\":7},{\"x\":10,\"y\":8},{\"x\":5,\"y\":3},{\"x\":7,\"y\":9},{\"x\":7,\"y\":10}]}");
-	str = string("{\"requests\":[{\"x\":4,\"y\":4},{\"x\":5,\"y\":5},{\"x\":6,\"y\":6},{\"x\":5,\"y\":4},{\"x\":4,\"y\":6},{\"x\":5,\"y\":6},{\"x\":6,\"y\":7},{\"x\":6,\"y\":8},{\"x\":8,\"y\":7}],\"responses\":[{\"x\":4,\"y\":5},{\"x\":-1,\"y\":-1},{\"x\":6,\"y\":4},{\"x\":7,\"y\":3},{\"x\":6,\"y\":3},{\"x\":3,\"y\":6},{\"x\":7,\"y\":8},{\"x\":6,\"y\":9}]}");
+	str = string("{\"requests\":[{\"x\":-1,\"y\":-1},{\"x\":6,\"y\":9},{\"x\":7,\"y\":9},{\"x\":9,\"y\":10},{\"x\":10,\"y\":7},{\"x\":6,\"y\":8},{\"x\":8,\"y\":7},{\"x\":5,\"y\":12},{\"x\":10,\"y\":8},{\"x\":7,\"y\":7},{\"x\":11,\"y\":11},{\"x\":9,\"y\":5},{\"x\":8,\"y\":11},{\"x\":11,\"y\":6},{\"x\":5,\"y\":10},{\"x\":7,\"y\":11},{\"x\":11,\"y\":5},{\"x\":12,\"y\":8},{\"x\":6,\"y\":14},{\"x\":12,\"y\":9},{\"x\":6,\"y\":6},{\"x\":7,\"y\":13},{\"x\":6,\"y\":4},{\"x\":4,\"y\":5},{\"x\":12,\"y\":3},{\"x\":7,\"y\":3},{\"x\":8,\"y\":5},{\"x\":10,\"y\":4},{\"x\":6,\"y\":5},{\"x\":6,\"y\":1},{\"x\":9,\"y\":2},{\"x\":10,\"y\":9},{\"x\":5,\"y\":2},{\"x\":13,\"y\":10},{\"x\":8,\"y\":0},{\"x\":11,\"y\":1},{\"x\":12,\"y\":14},{\"x\":13,\"y\":5},{\"x\":5,\"y\":8},{\"x\":2,\"y\":6},{\"x\":10,\"y\":3},{\"x\":1,\"y\":9},{\"x\":5,\"y\":7},{\"x\":7,\"y\":1},{\"x\":3,\"y\":4},{\"x\":3,\"y\":9},{\"x\":1,\"y\":3},{\"x\":4,\"y\":7},{\"x\":6,\"y\":3},{\"x\":2,\"y\":11},{\"x\":4,\"y\":10},{\"x\":0,\"y\":11},{\"x\":0,\"y\":5},{\"x\":4,\"y\":12},{\"x\":0,\"y\":8},{\"x\":4,\"y\":3},{\"x\":10,\"y\":12},{\"x\":2,\"y\":2},{\"x\":1,\"y\":8},{\"x\":14,\"y\":2},{\"x\":4,\"y\":2},{\"x\":3,\"y\":2},{\"x\":3,\"y\":13},{\"x\":3,\"y\":1},{\"x\":4,\"y\":0},{\"x\":14,\"y\":10},{\"x\":0,\"y\":0},{\"x\":1,\"y\":14},{\"x\":7,\"y\":14},{\"x\":12,\"y\":6},{\"x\":14,\"y\":8},{\"x\":14,\"y\":7},{\"x\":10,\"y\":13},{\"x\":13,\"y\":0},{\"x\":11,\"y\":13},{\"x\":9,\"y\":13},{\"x\":12,\"y\":13},{\"x\":11,\"y\":12},{\"x\":13,\"y\":14},{\"x\":12,\"y\":12},{\"x\":14,\"y\":12},{\"x\":14,\"y\":14},{\"x\":10,\"y\":14}],\"responses\":[{\"x\":7,\"y\":10},{\"x\":7,\"y\":8},{\"x\":8,\"y\":9},{\"x\":9,\"y\":8},{\"x\":8,\"y\":8},{\"x\":8,\"y\":10},{\"x\":6,\"y\":11},{\"x\":9,\"y\":9},{\"x\":10,\"y\":10},{\"x\":9,\"y\":7},{\"x\":10,\"y\":6},{\"x\":8,\"y\":6},{\"x\":9,\"y\":6},{\"x\":6,\"y\":10},{\"x\":6,\"y\":12},{\"x\":9,\"y\":11},{\"x\":11,\"y\":9},{\"x\":6,\"y\":13},{\"x\":11,\"y\":8},{\"x\":10,\"y\":5},{\"x\":11,\"y\":4},{\"x\":7,\"y\":5},{\"x\":6,\"y\":7},{\"x\":7,\"y\":4},{\"x\":7,\"y\":6},{\"x\":9,\"y\":4},{\"x\":8,\"y\":3},{\"x\":5,\"y\":6},{\"x\":12,\"y\":11},{\"x\":6,\"y\":2},{\"x\":11,\"y\":10},{\"x\":8,\"y\":2},{\"x\":12,\"y\":10},{\"x\":8,\"y\":4},{\"x\":9,\"y\":3},{\"x\":10,\"y\":2},{\"x\":11,\"y\":3},{\"x\":4,\"y\":6},{\"x\":5,\"y\":9},{\"x\":12,\"y\":5},{\"x\":5,\"y\":5},{\"x\":5,\"y\":3},{\"x\":3,\"y\":5},{\"x\":3,\"y\":6},{\"x\":7,\"y\":0},{\"x\":13,\"y\":11},{\"x\":8,\"y\":1},{\"x\":5,\"y\":4},{\"x\":1,\"y\":10},{\"x\":0,\"y\":10},{\"x\":4,\"y\":9},{\"x\":2,\"") + string("y\":7},{\"x\":5,\"y\":11},{\"x\":0,\"y\":6},{\"x\":2,\"y\":10},{\"x\":2,\"y\":5},{\"x\":4,\"y\":11},{\"x\":3,\"y\":10},{\"x\":11,\"y\":2},{\"x\":1,\"y\":5},{\"x\":4,\"y\":1},{\"x\":1,\"y\":2},{\"x\":0,\"y\":4},{\"x\":3,\"y\":0},{\"x\":2,\"y\":8},{\"x\":0,\"y\":3},{\"x\":4,\"y\":4},{\"x\":3,\"y\":11},{\"x\":8,\"y\":14},{\"x\":14,\"y\":4},{\"x\":13,\"y\":7},{\"x\":14,\"y\":9},{\"x\":13,\"y\":8},{\"x\":7,\"y\":12},{\"x\":11,\"y\":7},{\"x\":8,\"y\":13},{\"x\":13,\"y\":13},{\"x\":8,\"y\":12},{\"x\":10,\"y\":11},{\"x\":9,\"y\":12},{\"x\":13,\"y\":12},{\"x\":7,\"y\":2}]}");
 #else
 	getline(cin, str);
 #endif // DEBUG
@@ -808,6 +806,19 @@ int main() {
 		Json::Value act;
 		act["x"] = -1;
 		act["y"] = -1;
+
+		ret["response"] = act;
+		Json::FastWriter writer;
+		std::cout << writer.write(ret) << endl;
+		return 0;
+	}
+	/*****************************己方执黑，自废第一子（下四角之一），防换手**************************************/
+	else if (input["requests"][zero]["x"] == -1 && turnNum_rsp == 0)
+	{
+		Json::Value ret;
+		Json::Value act;
+		act["x"] = 0;
+		act["y"] = 0;
 
 		ret["response"] = act;
 		Json::FastWriter writer;
@@ -859,7 +870,11 @@ int main() {
 #endif
 			}
 			else std::cout << "NULL PTR" << endl;
+
+
+
 			return 0;
+
 		}
 		else {
 			//MCTS

@@ -780,6 +780,19 @@ int main() {
 		std::cout << writer.write(ret) << endl;
 		return 0;
 	}
+	/*****************************己方执黑，自废第一子（下四角之一），防换手**************************************/
+	else if (input["requests"][zero]["x"] == -1 && turnNum_rsp == 0)
+	{
+		Json::Value ret;
+		Json::Value act;
+		act["x"] = 0;
+		act["y"] = 0;
+
+		ret["response"] = act;
+		Json::FastWriter writer;
+		std::cout << writer.write(ret) << endl;
+		return 0;
+	}
 	//*****************************************************
 
 	Node * leaf = nullptr;
